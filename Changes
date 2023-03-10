@@ -1,0 +1,3 @@
+Revision history for the module "App::digitdemog" : 
+
+0.011  2023-0310 18:50+0900  Renovated from https://github.com/tulamili/download2gitrepo/blob/master/dl2git. "Download" is changed into "command output".
