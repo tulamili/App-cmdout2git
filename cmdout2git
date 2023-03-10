@@ -26,7 +26,7 @@ END{ ## 終了する段階で、二次情報を表示する
 do { & HELP_MESSAGE ; exit } if $#ARGV <= 0 ; # 引数が足りない場合は、ヘルプを表示して終了。
 my $cmd = $ARGV[0] ; # 実行するコマンド文字列
 my ($file_name, $dirs) = fileparse $ARGV[1]  ; # 出力先のファイル
-my $msg_head = $ARGV[2] // '' ; # GITのコミットに残すメッセージの最初の部分になる。ファイルの中身を表すデータの名前を想定している。
+my $msg_head = $ARGV[2] // $ARGV[0] ; # GITのコミットに残すメッセージの最初の部分になる。ファイルの中身を表すデータの名前を想定している。
 
 & change_dir ( $dirs ) ; 
 & get_cmdout ( $cmd , my $file_content ) ; 
