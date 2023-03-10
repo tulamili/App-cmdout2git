@@ -1,6 +1,6 @@
 package App::cmdout2git ; 
-our $VERSION = '0.013' ; 
-our $DATE = '2023-03-10T19:20+09:00' ; 
+our $VERSION = '0.014' ; 
+our $DATE = '2023-03-10T20:42+09:00' ; 
 
 =encoding utf8
 
