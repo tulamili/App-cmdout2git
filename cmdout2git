@@ -4,13 +4,17 @@ use 5.030 ;
 use feature qw[ say ] ; 
 use autodie qw[ open ] ;
 use warnings ; 
-use Getopt::Std ; getopts '2p' , \my %o ; 
+#use Getopt::Std ; getopts '2p' , \my %o ; 
+use Getopt::Long qw [ GetOptions :config bundling no_ignore_case pass_through ] ; # GetOptionsFromArray ] ;
 use POSIX qw [ strftime ] ; 
 use Term::ANSIColor qw[ :constants ] ; $Term::ANSIColor::AUTORESET = 1 ;
 use Time::HiRes qw[ gettimeofday tv_interval ] ; 
 use Time::Local qw[ timegm ] ; # タイムゾーンに依存する時差を計算するため
 use FindBin qw[ $Script ] ; 
 use File::Basename ; # fileparse 関数で、ファイル名とディレクトリ名に分解する目的で使う。
+
+my %o ;
+GetOptions 'catchf' => \$o{catchf} , 'push' => \$o{push}  ;
 
 my $time_start = [ gettimeofday ] ; 
 END{ ## 終了する段階で、二次情報を表示する
@@ -41,10 +45,10 @@ sub change_dir ( $ ) {
 sub get_cmdout ( $ $ ) {
   my $ctt = eval{ qx[ $_[0] ] } ;
   # my $ctt = $res -> is_success ? $res -> content : BRIGHT_RED BOLD $res -> status_line ; # (データ)ファイルに残す内容。Content.
-  die BRIGHT_RED BOLD &dt1000, "\tcommand `$_[0]' does not work." if $? and ! $o{2} ; 
+  die BRIGHT_RED BOLD &dt1000, "\tcommand `$_[0]' does not work." if $? and ! $o{catchf} ; 
   $_[1] = $? ? "$_[0]: failed.." : $ctt ;
 }
-
+  
 # ファイル書込とGitのコマンド起動
 sub write_file ( $$$$ $$$ ) { 
   #say STDERR YELLOW BOLD & dt1000 , "\t" , qx[ pwd ] =~ s/\n$//r , BOLD FAINT qq[ Trying to get $_[2] "$_[3]" $lmm0] ; ## 作業ディレクトリ名の(端末)出力
@@ -68,7 +72,7 @@ sub commit_git ( $$$$$$ ) {
   my $msg1 = qq [$message: $lines lines $bytes bytes $time retreived $lmm.] ; # GITのコメント文
   my $msg2 = qx [ git diff --stat -- $file | tail -1 ] =~ s/\n$//r ; #  「2 files changed, 11 insertions(+), 6 deletions(-)」のような情報を取り出す。
   my $cmd = qq[git reset --mix ; git add $file ; git status -s | grep -F $file && git commit -q -m '$msg1' -m '$msg2'] ;
-  $cmd .= ' && git push' if $o{p} ;
+  $cmd .= ' && git push' if $o{push} ;
   qx[ $cmd ] ;
   say join ";; " , & dt1000 , $cmd , "\$?=$?" ; # Git 2.29だとcommitがなされた時のみsuccessになるようだが、ドキュメント記載では無い。
 }
@@ -121,8 +125,8 @@ $0 CMD FILE [MESSAGE_HEAD]
 
  引数のオプション : 
 
-   -p : git pushも行う。
-   -2 : コマンドの実行に失敗した場合でも、処理は進める。
+   --push : git pushも行う。
+   --catchf : コマンドの実行に失敗した場合でも、処理は進める。 ( catch failure で名前は考えた。)
 
  想定されている目的: 
 
@@ -131,9 +135,12 @@ $0 CMD FILE [MESSAGE_HEAD]
 
  利用例 : 
 
-  cmdout2git date date date  # date というコマンドを実行して、date というファイルに結果を保管し、dateというコミットメッセージを先頭に、gitのレポジトリにコミット。
+  cmdout2git date date date        # date というコマンドを実行して、date というファイルに結果を保管し、dateというコミットメッセージを先頭に、gitのレポジトリにコミット。
   cmdout2git 'ls -l' ls-l 'ls -l'  # コマンド ls -l を実行して、ファイル ls-l に結果を保管し、コミット。メッセージは ls -l で始まって、いろいろ補助情報を追加。
-  cmdout2git last last last # 誰がログインしたのか、再起動(reboot)がいつ行われたのか、が分かる。
+  cmdout2git last last last --push # 誰がログインしたのか、再起動(reboot)がいつ行われたのか、が分かる。さらに、リモートレポジトリに push する。
+
+
+  git remote -v                    # どこにpushされるか知りたいときに便利。
 
  必要な準備: 
 
